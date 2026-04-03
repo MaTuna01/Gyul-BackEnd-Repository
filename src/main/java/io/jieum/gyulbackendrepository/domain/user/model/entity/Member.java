@@ -33,6 +33,7 @@ public class Member {
 
     // 성별의 경우 nullable 처리를 어떻게 할지, 그냥 문자열로 받을지, enum으로 정의해서 받을지 논의 필요
     @Enumerated(EnumType.STRING)
+    @Column(nullable = true)
     private Gender gender;
 
     @Enumerated(EnumType.STRING)

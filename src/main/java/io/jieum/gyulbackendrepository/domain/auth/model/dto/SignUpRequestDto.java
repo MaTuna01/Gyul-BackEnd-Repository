@@ -1,5 +1,6 @@
 package io.jieum.gyulbackendrepository.domain.auth.model.dto;
 
+import io.jieum.gyulbackendrepository.domain.user.model.entity.Gender;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -20,8 +21,6 @@ public record SignUpRequestDto (
     @Size(min = 1, max = 10, message = "이름은 최소 1글자, 최대 10글자 미만이어야 합니다.")
     String name,
 
-    @NotBlank(message = "성별은 필수항목입니다.")
-    @Size(min = 1, max = 6, message = "성별은 최소 1글자, 최대 6글자 이하로 입력해야합니다.")
-    String gender
+    Gender gender
 ) {
 }
