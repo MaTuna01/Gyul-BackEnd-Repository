@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @RequiredArgsConstructor
 @Controller
-@RequestMapping("api/v1")
+@RequestMapping("/api/v1")
 public class SignUpController {
 
     SignUpService signUpService;
