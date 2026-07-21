@@ -169,23 +169,48 @@ wss://<ai-server-host>/ws/interview?token=<ACCESS_TOKEN>
 - 존재하지 않는 `email`이면 로그 남기고 스킵(또는 DLQ). 예외로 컨슈머가 멈추지 않게 처리.
 - 스키마 파싱 실패 메시지는 **DLQ 토픽** `interview.analysis-report.dlq`로 보낸다(TODO).
 
-### 3.4 Spring 측 적재 스키마 (예정)
+### 3.4 Spring 측 적재 스키마 (구현 완료)
 
-`domain/report/` 도메인 신설 예정. 대략:
+`domain/report/` 도메인. `emotion_scores`는 MySQL JSON 대신 **TEXT**에 JSON 문자열로 보관한다(적재 시 직렬화, 조회 시 Map으로 역직렬화).
 
 | 테이블 `INTERVIEW_REPORT` | 타입 | 설명 |
 |---|---|---|
 | `id` | BIGINT PK | |
 | `session_id` | VARCHAR unique | 멱등 키 |
-| `member_id` | BIGINT FK → MEMBER | `email`로 조회해 매핑 |
+| `member_id` | BIGINT | `email`로 조회해 매핑한 회원 ID |
 | `phase` | VARCHAR | |
-| `dominant_emotion` | VARCHAR | |
-| `emotion_scores` | JSON | |
+| `dominant_emotion` | VARCHAR | `Emotion` enum |
+| `emotion_scores` | TEXT | 감정별 확률 맵의 JSON 문자열 |
 | `summary` | TEXT | |
 | `started_at`/`ended_at` | DATETIME | |
 | `created_at` | DATETIME | 적재 시각 |
 
-조회 API(예: `GET /api/v1/members/me/reports`)는 별도 이슈로 구현.
+### 3.5 리포트 조회 API (구현 완료, 이슈 #12)
+
+로그인 회원 본인의 리포트만 조회 가능(JWT 필수, principal = 이메일 → `member_id` 매핑).
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| `GET` | `/api/v1/members/me/reports` | 본인 리포트 목록 (created_at 최신순) |
+| `GET` | `/api/v1/members/me/reports/{reportId}` | 본인 리포트 단건 상세 (타인 소유 시 조회 불가) |
+
+**응답 예시 (단건)**
+
+```json
+{
+  "id": 12,
+  "sessionId": "conv-20260721-abc123",
+  "phase": "PHASE_1",
+  "dominantEmotion": "TENSION",
+  "emotionScores": { "tension": 0.62, "confusion": 0.21, "calm": 0.17 },
+  "summary": "사용자는 전반적으로 긴장 상태를 보였으며...",
+  "startedAt": "2026-07-21T10:00:00",
+  "endedAt": "2026-07-21T10:12:34",
+  "createdAt": "2026-07-21T10:12:40"
+}
+```
+
+> `emotionScores`는 적재 시 TEXT에 저장한 JSON 문자열을 조회 응답에서 Map으로 복원한 값이다.
 
 ---
 
@@ -215,4 +240,4 @@ wss://<ai-server-host>/ws/interview?token=<ACCESS_TOKEN>
 - [x] Redis DB 인덱스 정렬 (Spring을 DB 1로 이동) — 이슈 #8 완료
 - [ ] JWT에 `memberId` claim 추가 여부 (이메일 변경 대비)
 - [ ] Kafka DLQ 및 재처리 정책 확정
-- [ ] 리포트 조회 API 명세
+- [x] 리포트 조회 API 명세 (§3.5) — 이슈 #12 완료
