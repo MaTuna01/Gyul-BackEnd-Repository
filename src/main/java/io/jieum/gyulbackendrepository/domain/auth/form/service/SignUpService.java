@@ -2,6 +2,7 @@ package io.jieum.gyulbackendrepository.domain.auth.form.service;
 
 import io.jieum.gyulbackendrepository.domain.auth.model.dto.SignUpRequestDto;
 import io.jieum.gyulbackendrepository.domain.user.model.entity.Member;
+import io.jieum.gyulbackendrepository.domain.user.model.entity.Role;
 import io.jieum.gyulbackendrepository.domain.user.repository.MemberRepository;
 import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ public class SignUpService {
                 .name(signUpRequest.name())
                 .createdAt(LocalDateTime.now())
                 .gender(signUpRequest.gender())
+                .role(Role.MEMBER)
                 .build();
 
         memberRepository.save(signUpMember);
