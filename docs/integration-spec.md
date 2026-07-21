@@ -198,9 +198,8 @@ wss://<ai-server-host>/ws/interview?token=<ACCESS_TOKEN>
 | `0` | FastAPI | 대화 세션(LangChain memory) | (FastAPI 규약) |
 | `1` | Spring | Refresh Token | `RT:{email}` |
 
-> ⚠️ **현재 불일치**: Spring `application.yml`의 `spring.data.redis`에 `database` 미지정 →
-> 기본 **DB 0** 을 사용 중이다. 위 규약대로 하려면 Spring이 `database: 1`로 변경해야 한다.
-> **조치 필요(TODO)** — 별도 이슈로 반영.
+> ✅ Spring은 `application.yml`의 `spring.data.redis.database: 1`로 DB 1을 사용한다 (이슈 #8).
+> FastAPI는 대화 세션을 **DB 0** 에 저장하도록 맞춘다.
 
 ---
 
@@ -213,7 +212,7 @@ wss://<ai-server-host>/ws/interview?token=<ACCESS_TOKEN>
 ## 6. 미결 항목 (TODO — 협의 필요)
 
 - [ ] WebSocket 세션 중 Access Token 만료 처리 정책 (강제종료 vs 유예)
-- [ ] Redis DB 인덱스 정렬 (Spring을 DB 1로 이동)
+- [x] Redis DB 인덱스 정렬 (Spring을 DB 1로 이동) — 이슈 #8 완료
 - [ ] JWT에 `memberId` claim 추가 여부 (이메일 변경 대비)
 - [ ] Kafka DLQ 및 재처리 정책 확정
 - [ ] 리포트 조회 API 명세

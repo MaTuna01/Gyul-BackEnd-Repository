@@ -20,6 +20,7 @@ spring:
     redis:
       host: localhost
       port: 6379
+      database: 1  # DB 1 = Refresh Token(RT:{email}). DB 0은 FastAPI 대화 세션 (docs/integration-spec.md §4)
 
   security:
     oauth2:
