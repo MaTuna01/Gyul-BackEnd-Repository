@@ -1,0 +1,51 @@
+services:
+  # ──────────────────────────────────────
+  # MySQL 8.0 — gyul_db
+  # ──────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: gyul-mysql
+    restart: unless-stopped
+    ports:
+      - "${DB_PORT:-3306}:3306"  # 호스트 3306 충돌 시 .env에서 DB_PORT 변경
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: gyul_db
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Seoul
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./infra/mysql/init:/docker-entrypoint-initdb.d  # 초기화 SQL
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ──────────────────────────────────────
+  # Redis 7 — Refresh Token (DB 1) / FastAPI 대화 세션 (DB 0)
+  # ──────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: gyul-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql-data:
+    driver: local
+  redis-data:
+    driver: local
