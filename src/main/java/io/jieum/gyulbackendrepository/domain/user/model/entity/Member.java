@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 
@@ -39,13 +38,35 @@ public class Member {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    // 소셜 로그인 제공자 (google, kakao). Form 전용 회원은 null
+    @Column(name = "provider")
+    private String provider;
+
+    // 제공자 내 사용자 고유 ID
+    @Column(name = "provider_id")
+    private String providerId;
+
     @Builder
-    public Member(String email, String password, String name, LocalDateTime createdAt, Gender gender, Role role) {
+    public Member(String email, String password, String name, LocalDateTime createdAt, Gender gender, Role role,
+                  String provider, String providerId) {
         this.email = email;
         this.password = password;
         this.name = name;
         this.createdAt = createdAt;
         this.gender = gender;
         this.role = role;
+        this.provider = provider;
+        this.providerId = providerId;
+    }
+
+    // 소셜 로그인 최초 가입 시 추가정보(성별) 입력
+    public void updateGender(Gender gender) {
+        this.gender = gender;
+    }
+
+    // 기존(Form) 계정에 소셜 로그인 정보 연결 — 이메일 기준 계정 병합
+    public void linkOAuth(String provider, String providerId) {
+        this.provider = provider;
+        this.providerId = providerId;
     }
 }
