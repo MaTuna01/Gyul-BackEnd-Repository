@@ -8,6 +8,8 @@ import io.jieum.gyulbackendrepository.domain.report.service.ReportQueryService;
 import io.jieum.gyulbackendrepository.domain.user.model.entity.Member;
 import io.jieum.gyulbackendrepository.domain.user.model.entity.Role;
 import io.jieum.gyulbackendrepository.domain.user.repository.MemberRepository;
+import io.jieum.gyulbackendrepository.global.exception.BusinessException;
+import io.jieum.gyulbackendrepository.global.exception.ErrorCode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -106,10 +108,20 @@ class ReportQueryServiceTest {
     }
 
     @Test
-    void 타인_리포트_단건조회는_예외를_던진다() {
+    void 타인_리포트_단건조회는_REPORT_FORBIDDEN() {
         InterviewReport othersReport = saveReport("s-other-detail", other.getId(), LocalDateTime.now());
 
         assertThatThrownBy(() -> reportQueryService.getMyReport(EMAIL, othersReport.getId()))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(BusinessException.class)
+                .extracting(e -> ((BusinessException) e).getErrorCode())
+                .isEqualTo(ErrorCode.REPORT_FORBIDDEN);
+    }
+
+    @Test
+    void 존재하지_않는_리포트_단건조회는_REPORT_NOT_FOUND() {
+        assertThatThrownBy(() -> reportQueryService.getMyReport(EMAIL, 99999999L))
+                .isInstanceOf(BusinessException.class)
+                .extracting(e -> ((BusinessException) e).getErrorCode())
+                .isEqualTo(ErrorCode.REPORT_NOT_FOUND);
     }
 }
