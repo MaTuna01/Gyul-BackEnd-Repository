@@ -1,5 +1,8 @@
 package io.jieum.gyulbackendrepository.global.config;
 
+import io.jieum.gyulbackendrepository.domain.auth.oauth2.handler.OAuth2LoginFailureHandler;
+import io.jieum.gyulbackendrepository.domain.auth.oauth2.handler.OAuth2LoginSuccessHandler;
+import io.jieum.gyulbackendrepository.domain.auth.oauth2.service.CustomOAuth2UserService;
 import io.jieum.gyulbackendrepository.global.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -23,6 +26,9 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+    private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -45,6 +51,12 @@ public class SecurityConfig {
                         "/oauth2/**"
                 ).permitAll()
                         .anyRequest().authenticated()
+                )
+                // 소셜 로그인 (Google, Kakao)
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                        .successHandler(oAuth2LoginSuccessHandler)
+                        .failureHandler(oAuth2LoginFailureHandler)
                 )
                 .addFilterBefore(
                         jwtAuthenticationFilter,
