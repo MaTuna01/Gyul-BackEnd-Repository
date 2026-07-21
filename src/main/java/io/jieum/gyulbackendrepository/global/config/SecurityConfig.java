@@ -3,6 +3,8 @@ package io.jieum.gyulbackendrepository.global.config;
 import io.jieum.gyulbackendrepository.domain.auth.oauth2.handler.OAuth2LoginFailureHandler;
 import io.jieum.gyulbackendrepository.domain.auth.oauth2.handler.OAuth2LoginSuccessHandler;
 import io.jieum.gyulbackendrepository.domain.auth.oauth2.service.CustomOAuth2UserService;
+import io.jieum.gyulbackendrepository.global.jwt.JwtAccessDeniedHandler;
+import io.jieum.gyulbackendrepository.global.jwt.JwtAuthenticationEntryPoint;
 import io.jieum.gyulbackendrepository.global.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -26,6 +28,8 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
     private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
@@ -51,6 +55,11 @@ public class SecurityConfig {
                         "/oauth2/**"
                 ).permitAll()
                         .anyRequest().authenticated()
+                )
+                // 필터 단계 인증/인가 실패 시 표준 ErrorResponse 반환 (401/403)
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                        .accessDeniedHandler(jwtAccessDeniedHandler)
                 )
                 // 소셜 로그인 (Google, Kakao)
                 .oauth2Login(oauth2 -> oauth2
