@@ -22,6 +22,14 @@ spring:
       port: 6379
       database: 1  # DB 1 = Refresh Token(RT:{email}). DB 0은 FastAPI 대화 세션 (docs/integration-spec.md §4)
 
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: gyul-backend
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
   security:
     oauth2:
       client:
@@ -48,6 +56,9 @@ spring:
 app:
   oauth2:
     redirect-uri: ${APP_OAUTH2_REDIRECT_URI:http://localhost:3000}  # 프론트 개발 완료 후 실제 주소로 교체
+  kafka:
+    topic:
+      analysis-report: interview.analysis-report  # FastAPI → Spring 분석 리포트 토픽 (docs/integration-spec.md §3)
 
 jwt:
   secret: ${JWT_SECRET}
