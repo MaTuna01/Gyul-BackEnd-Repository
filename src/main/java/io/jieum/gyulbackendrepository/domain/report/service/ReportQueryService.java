@@ -8,6 +8,8 @@ import io.jieum.gyulbackendrepository.domain.report.model.entity.InterviewReport
 import io.jieum.gyulbackendrepository.domain.report.repository.InterviewReportRepository;
 import io.jieum.gyulbackendrepository.domain.user.model.entity.Member;
 import io.jieum.gyulbackendrepository.domain.user.repository.MemberRepository;
+import io.jieum.gyulbackendrepository.global.exception.BusinessException;
+import io.jieum.gyulbackendrepository.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -38,17 +40,20 @@ public class ReportQueryService {
                 .toList();
     }
 
-    // 본인 리포트 단건 상세
+    // 본인 리포트 단건 상세 — 없으면 404, 타인 소유면 403
     public ReportResponseDto getMyReport(String email, Long reportId) {
         Long memberId = resolveMemberId(email);
-        InterviewReport report = reportRepository.findByIdAndMemberId(reportId, memberId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않거나 접근할 수 없는 리포트입니다."));
+        InterviewReport report = reportRepository.findById(reportId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.REPORT_NOT_FOUND));
+        if (!report.getMemberId().equals(memberId)) {
+            throw new BusinessException(ErrorCode.REPORT_FORBIDDEN);
+        }
         return toDto(report);
     }
 
     private Long resolveMemberId(String email) {
         Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
         return member.getId();
     }
 
