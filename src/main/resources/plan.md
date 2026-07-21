@@ -20,15 +20,40 @@
     * [x] 일반 Form 회원가입 / 로그인 API 구현
     * [x] JJWT 기반 Access/Refresh Token 발급 및 Redis 세션 관리 로직 구현
     * [x] SecurityConfig, JwtProvider, JwtAuthenticationFilter 구현
-    * [ ] OAuth 2.0 (Google, Kakao) 소셜 로그인 연동
-    * [ ] 소셜 로그인 최초 가입 시 추가정보(성별) 입력 플로우 구현
+    * [x] OAuth 2.0 (Google, Kakao) 소셜 로그인 연동 (이슈 #6)
+    * [x] 소셜 로그인 최초 가입 시 추가정보(성별) 입력 플로우 구현 (이슈 #6, `PUT /api/v1/members/me/profile`)
 * **FastAPI (실시간 대화 및 감정 분석)**
     * [ ] WebSocket 엔드포인트 개통 및 Spring Boot 발급 JWT 교차 검증 로직 구현
     * [ ] LangChain + RedisChatMessageHistory를 활용한 대화 세션(Memory) 유지
     * [ ] STT(Whisper) -> LangChain -> TTS 파이프라인 연결
     * [ ] 사용자 음성 데이터 기반 감정(긴장, 당황 등) 추출 모델 연동 (Vision 제외)
 * **시스템 연동**
-    * [ ] 대화 종료 시 FastAPI -> Kafka -> Spring Boot 방향으로 최종 분석 리포트 비동기 발행 및 적재
+    * [~] 대화 종료 시 FastAPI -> Kafka -> Spring Boot 방향으로 최종 분석 리포트 비동기 발행 및 적재
+        * [x] Spring 측 Kafka Consumer 및 적재 (sessionId 멱등, 미존재 이메일 스킵) (이슈 #10)
+        * [ ] FastAPI 측 리포트 발행 (별도 레포)
+
+### 📊 백엔드(Spring Boot) 진행 현황 (2026-07-22 기준)
+
+Phase 1의 **Spring Boot 측 작업은 기능적으로 완료** 상태이며, 남은 Phase 1 항목은 대부분 FastAPI(별도 레포) 몫이다.
+
+| 이슈 | 작업 | 상태 |
+|---|---|---|
+| #1 | Form 회원가입/로그인, JWT(Access/Refresh) + Redis 세션, SecurityConfig/JwtProvider/Filter | ✅ dev 머지 |
+| #2 | 회원가입 시 기본 role(MEMBER) 누락 수정 | ✅ dev 머지 |
+| #4 | Spring ↔ FastAPI 연동 명세서 작성 (`docs/integration-spec.md`) | ✅ dev 머지 |
+| #6 | OAuth 2.0(Google/Kakao) 소셜 로그인 + 추가정보(성별) 입력 API | ✅ dev 머지 |
+| #8 | Redis DB 인덱스 분리 (Refresh Token을 DB 1로) | ✅ dev 머지 |
+| #10 | Kafka 분석 리포트 Consumer 및 적재 (sessionId 멱등) | ✅ dev 머지 |
+| #12 | 분석 리포트 조회 API (`GET /api/v1/members/me/reports`) | ✅ dev 머지 |
+| #14 | 전역 예외 처리 및 표준 에러 응답 규약 (`global/exception/`) | 🔵 PR #15 (리뷰/머지 대기) |
+| #16 | 필터 단계 인증/인가 예외 응답 통일 (401/403 표준화) | 🔵 PR #17 (#15 뒤에 머지) |
+
+**다음 후보 작업**
+* [ ] 연동 명세서 §6 백엔드 항목: JWT `memberId` claim 추가, Kafka DLQ/재처리 정책
+* [ ] 테스트/빌드 환경 개선: `.env`의 gradle 테스트 자동 주입, Testcontainers 도입
+* [ ] `dev` → `main` 승격 (Phase 1 백엔드 단위 기능 완성 시점)
+
+> ⚠️ 이슈/PR 번호는 GitHub 기준. `feat/[#이슈]` → `dev` PR로 머지하며 이슈는 수동 close한다(브랜치 전략 참고).
 
 ### 🚀 Phase 2: 2학기 고도화 (IT 기술 면접 시뮬레이터)
 **목표:** RAG 연동 및 비전 기술 융합을 통한 압박 면접 환경 구현
