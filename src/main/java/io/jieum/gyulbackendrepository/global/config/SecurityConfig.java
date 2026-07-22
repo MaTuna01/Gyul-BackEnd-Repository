@@ -7,6 +7,7 @@ import io.jieum.gyulbackendrepository.global.jwt.JwtAccessDeniedHandler;
 import io.jieum.gyulbackendrepository.global.jwt.JwtAuthenticationEntryPoint;
 import io.jieum.gyulbackendrepository.global.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -20,6 +21,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -33,6 +35,10 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
     private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
+
+    // 콤마 구분 허용 오리진 (application.yml: app.cors.allowed-origins)
+    @Value("${app.cors.allowed-origins}")
+    private String allowedOrigins;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -78,8 +84,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        // 프론트엔드 주소
-        config.setAllowedOrigins(List.of("http://localhost:3000"));
+        // 프론트엔드 주소 — 환경변수(CORS_ALLOWED_ORIGINS)로 주입, 콤마 구분 다중 허용
+        config.setAllowedOrigins(
+                Arrays.stream(allowedOrigins.split(","))
+                        .map(String::trim)
+                        .filter(o -> !o.isEmpty())
+                        .toList()
+        );
 
         config.setAllowedMethods(List.of("GET","POST","PUT","DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
