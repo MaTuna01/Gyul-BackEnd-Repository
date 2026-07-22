@@ -36,6 +36,7 @@ public class JwtProvider {
 
         return Jwts.builder()
                 .subject(member.getEmail())
+                .claim("memberId", member.getId())
                 .claim("role", member.getRole().name())
                 .issuedAt(now)
                 .expiration(expiry)
@@ -78,6 +79,11 @@ public class JwtProvider {
     // 이메일 추출
     public String getEmailFromToken(String token) {
         return getClaims(token).getSubject();
+    }
+
+    // memberId 추출 (memberId claim이 없는 구 토큰이면 null)
+    public Long getMemberIdFromToken(String token) {
+        return getClaims(token).get("memberId", Long.class);
     }
 
     // Authentication 객체 생성 (필터 사용)

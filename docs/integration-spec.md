@@ -60,20 +60,22 @@ Spring은 현재 **HS256(대칭키)** 로 서명한다. FastAPI는 **동일한 �
 | Claim | 타입 | 설명 |
 |---|---|---|
 | `sub` | string | **사용자 이메일** (사용자 식별자) |
+| `memberId` | number | **회원 PK**(`MEMBER.member_id`) — 이메일 변경에도 불변인 안정적 식별자 |
 | `role` | string | 권한 (`MEMBER` / `ADMIN`) |
 | `iat` | number | 발급 시각 |
 | `exp` | number | 만료 시각 (Access 30분) |
 
-> FastAPI는 사용자를 **`sub`(이메일)** 로 식별한다. 별도 memberId claim은 현재 없음
-> — 필요 시 Spring이 `memberId` claim 추가를 검토(§5 변경 관리).
+> FastAPI는 사용자를 `sub`(이메일)로 식별하되, **불변 식별자가 필요한 경우 `memberId`를 사용**한다.
+> `memberId`는 Access Token에만 담기며 Refresh Token에는 없다(이슈 #20).
 
 **FastAPI 검증 예시 (PyJWT)**
 
 ```python
 import jwt  # PyJWT
 payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
-email = payload["sub"]          # 사용자 식별
-role  = payload.get("role")
+email     = payload["sub"]           # 사용자 식별(이메일)
+member_id = payload.get("memberId")  # 불변 식별자(회원 PK)
+role      = payload.get("role")
 ```
 
 ### 1.2 향후 강화(선택)
@@ -166,8 +168,10 @@ wss://<ai-server-host>/ws/interview?token=<ACCESS_TOKEN>
 ### 3.3 신뢰성/멱등성
 
 - Spring Consumer는 `sessionId`로 **중복 수신을 무시**한다(멱등 처리). Kafka는 at-least-once.
-- 존재하지 않는 `email`이면 로그 남기고 스킵(또는 DLQ). 예외로 컨슈머가 멈추지 않게 처리.
-- 스키마 파싱 실패 메시지는 **DLQ 토픽** `interview.analysis-report.dlq`로 보낸다(TODO).
+- 존재하지 않는 `email`, 중복 `sessionId`는 **정상 스킵**(로그만 남김) — 예외가 아니므로 DLQ 대상이 아니다.
+- 스키마 파싱 실패 메시지는 재처리 무의미(poison message) → **재시도 없이 DLQ 토픽** `interview.analysis-report.dlq`로 발행한다. (이슈 #22 완료)
+- 그 외 일시적 오류(DB 순단 등)는 **1초 간격 2회 재시도(총 3회)** 후에도 실패하면 DLQ로 보낸다.
+- 구현: Spring `DefaultErrorHandler` + `DeadLetterPublishingRecoverer`(`global/config/KafkaConsumerConfig`). DLQ 토픽은 개발환경에서 브로커 auto-create로 생성되며, **운영 배포 시 DLQ 토픽 사전 생성/파티션·보존 정책은 별도 협의**한다.
 
 ### 3.4 Spring 측 적재 스키마 (구현 완료)
 
@@ -238,6 +242,6 @@ wss://<ai-server-host>/ws/interview?token=<ACCESS_TOKEN>
 
 - [ ] WebSocket 세션 중 Access Token 만료 처리 정책 (강제종료 vs 유예)
 - [x] Redis DB 인덱스 정렬 (Spring을 DB 1로 이동) — 이슈 #8 완료
-- [ ] JWT에 `memberId` claim 추가 여부 (이메일 변경 대비)
-- [ ] Kafka DLQ 및 재처리 정책 확정
+- [x] JWT에 `memberId` claim 추가 (이메일 변경 대비) — 이슈 #20 완료 (Access Token, §1.1)
+- [x] Kafka DLQ 및 재처리 정책 확정 (§3.3) — 이슈 #22 완료 (운영 DLQ 토픽 사전 생성/보존 정책은 배포 시 협의)
 - [x] 리포트 조회 API 명세 (§3.5) — 이슈 #12 완료

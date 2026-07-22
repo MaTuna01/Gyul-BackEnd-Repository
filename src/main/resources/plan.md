@@ -30,6 +30,7 @@
 * **시스템 연동**
     * [~] 대화 종료 시 FastAPI -> Kafka -> Spring Boot 방향으로 최종 분석 리포트 비동기 발행 및 적재
         * [x] Spring 측 Kafka Consumer 및 적재 (sessionId 멱등, 미존재 이메일 스킵) (이슈 #10)
+        * [x] Spring 측 DLQ/재처리 정책 (파싱 실패 즉시 DLQ, 일시 오류 재시도 후 DLQ) (이슈 #22)
         * [ ] FastAPI 측 리포트 발행 (별도 레포)
 
 ### 📊 백엔드(Spring Boot) 진행 현황 (2026-07-22 기준)
@@ -45,11 +46,11 @@ Phase 1의 **Spring Boot 측 작업은 기능적으로 완료** 상태이며, �
 | #8 | Redis DB 인덱스 분리 (Refresh Token을 DB 1로) | ✅ dev 머지 |
 | #10 | Kafka 분석 리포트 Consumer 및 적재 (sessionId 멱등) | ✅ dev 머지 |
 | #12 | 분석 리포트 조회 API (`GET /api/v1/members/me/reports`) | ✅ dev 머지 |
-| #14 | 전역 예외 처리 및 표준 에러 응답 규약 (`global/exception/`) | 🔵 PR #15 (리뷰/머지 대기) |
-| #16 | 필터 단계 인증/인가 예외 응답 통일 (401/403 표준화) | 🔵 PR #17 (#15 뒤에 머지) |
+| #14 | 전역 예외 처리 및 표준 에러 응답 규약 (`global/exception/`) | ✅ dev 머지 |
+| #16 | 필터 단계 인증/인가 예외 응답 통일 (401/403 표준화) | ✅ dev 머지 |
+| #20 | JWT Access Token에 `memberId` claim 추가 (이메일 변경 대비) | 🔵 feat/#20 (dev 머지 대기) |
 
 **다음 후보 작업**
-* [ ] 연동 명세서 §6 백엔드 항목: JWT `memberId` claim 추가, Kafka DLQ/재처리 정책
 * [x] 테스트 환경 개선: Testcontainers 도입 + `application-test.yml` 자립화 → `.env`·인프라 없이 `./gradlew test` 통과 (이슈 #26)
 * [ ] GitHub Actions CI 구축 (build+test, #26 위에서 진행)
 * [ ] `dev` → `main` 승격 (Phase 1 백엔드 단위 기능 완성 시점)
