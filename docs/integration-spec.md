@@ -166,8 +166,10 @@ wss://<ai-server-host>/ws/interview?token=<ACCESS_TOKEN>
 ### 3.3 신뢰성/멱등성
 
 - Spring Consumer는 `sessionId`로 **중복 수신을 무시**한다(멱등 처리). Kafka는 at-least-once.
-- 존재하지 않는 `email`이면 로그 남기고 스킵(또는 DLQ). 예외로 컨슈머가 멈추지 않게 처리.
-- 스키마 파싱 실패 메시지는 **DLQ 토픽** `interview.analysis-report.dlq`로 보낸다(TODO).
+- 존재하지 않는 `email`, 중복 `sessionId`는 **정상 스킵**(로그만 남김) — 예외가 아니므로 DLQ 대상이 아니다.
+- 스키마 파싱 실패 메시지는 재처리 무의미(poison message) → **재시도 없이 DLQ 토픽** `interview.analysis-report.dlq`로 발행한다. (이슈 #22 완료)
+- 그 외 일시적 오류(DB 순단 등)는 **1초 간격 2회 재시도(총 3회)** 후에도 실패하면 DLQ로 보낸다.
+- 구현: Spring `DefaultErrorHandler` + `DeadLetterPublishingRecoverer`(`global/config/KafkaConsumerConfig`). DLQ 토픽은 개발환경에서 브로커 auto-create로 생성되며, **운영 배포 시 DLQ 토픽 사전 생성/파티션·보존 정책은 별도 협의**한다.
 
 ### 3.4 Spring 측 적재 스키마 (구현 완료)
 
@@ -239,5 +241,5 @@ wss://<ai-server-host>/ws/interview?token=<ACCESS_TOKEN>
 - [ ] WebSocket 세션 중 Access Token 만료 처리 정책 (강제종료 vs 유예)
 - [x] Redis DB 인덱스 정렬 (Spring을 DB 1로 이동) — 이슈 #8 완료
 - [ ] JWT에 `memberId` claim 추가 여부 (이메일 변경 대비)
-- [ ] Kafka DLQ 및 재처리 정책 확정
+- [x] Kafka DLQ 및 재처리 정책 확정 (§3.3) — 이슈 #22 완료 (운영 DLQ 토픽 사전 생성/보존 정책은 배포 시 협의)
 - [x] 리포트 조회 API 명세 (§3.5) — 이슈 #12 완료
