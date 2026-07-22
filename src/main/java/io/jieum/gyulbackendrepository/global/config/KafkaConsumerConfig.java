@@ -1,12 +1,14 @@
 package io.jieum.gyulbackendrepository.global.config;
 
 import io.jieum.gyulbackendrepository.domain.report.messaging.ReportMessageParseException;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
@@ -36,6 +38,17 @@ public class KafkaConsumerConfig {
 
     @Value("${app.kafka.topic.analysis-report-dlq}")
     private String dlqTopic;
+
+    // DLQ 토픽 사전 생성 — KafkaAdmin이 기동 시 멱등 생성한다.
+    // 브로커 auto-create가 꺼진 운영 환경에서도 DLQ 발행이 유실되지 않도록 보장.
+    // partitions/replicas는 개발 기준(1). 운영은 ops가 사전 생성/오버라이드 가능.
+    @Bean
+    public NewTopic analysisReportDlqTopic() {
+        return TopicBuilder.name(dlqTopic)
+                .partitions(1)
+                .replicas(1)
+                .build();
+    }
 
     // DLQ 발행 전용 Producer (원본 메시지가 String이므로 String 직렬화)
     @Bean
