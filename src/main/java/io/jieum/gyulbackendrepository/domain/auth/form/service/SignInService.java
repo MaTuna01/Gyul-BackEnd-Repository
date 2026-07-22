@@ -26,16 +26,27 @@ public class SignInService {
     private final RedisTemplate<String, String> redisTemplate;
 
     private static final String RT_KEY_PREFIX = "RT:";
+    // 로그인 실패 횟수 카운터 (무차별 대입 방어)
+    private static final String LOGIN_FAIL_PREFIX = "login-fail:";
+    private static final int MAX_LOGIN_ATTEMPTS = 5;
+    private static final long LOCK_MINUTES = 10;
 
     // 로그인
     public TokenResponseDto signIn(SignInRequestDto request) {
+        String failKey = LOGIN_FAIL_PREFIX + request.email();
+        // 잠금 상태면 자격 검증 이전에 즉시 차단 (계정 기준 무차별 대입 방어)
+        if (isLocked(failKey)) {
+            throw new BusinessException(ErrorCode.TOO_MANY_LOGIN_ATTEMPTS);
+        }
         // 이메일로 Member 조회 — 보안상 이메일 존재 여부를 노출하지 않도록 비번 불일치와 동일 응답
-        Member member = memberRepository.findByEmail(request.email())
-                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
-        // 비밀번호 검증
-        if (!passwordEncoder.matches(request.password(), member.getPassword())) {
+        Member member = memberRepository.findByEmail(request.email()).orElse(null);
+        // 자격 불일치(없는 이메일/틀린 비번)는 동일 처리 + 실패 카운트 증가
+        if (member == null || !passwordEncoder.matches(request.password(), member.getPassword())) {
+            recordFailure(failKey);
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
         }
+        // 성공 시 실패 카운터 초기화
+        redisTemplate.delete(failKey);
         // 토큰 발급
         String accessToken = jwtProvider.generateAccessToken(member);
         String refreshToken = jwtProvider.generateRefreshToken(member.getEmail());
@@ -88,5 +99,19 @@ public class SignInService {
     public void signOut(String email) {
         //Redis에서 Refresh Token 삭제
         redisTemplate.delete(RT_KEY_PREFIX + email);
+    }
+
+    // 실패 카운터가 임계치 이상이면 잠금 상태
+    private boolean isLocked(String failKey) {
+        String attempts = redisTemplate.opsForValue().get(failKey);
+        return attempts != null && Integer.parseInt(attempts) >= MAX_LOGIN_ATTEMPTS;
+    }
+
+    // 실패 1회 기록 — 최초 실패 시 잠금 창(TTL) 설정
+    private void recordFailure(String failKey) {
+        Long count = redisTemplate.opsForValue().increment(failKey);
+        if (count != null && count == 1L) {
+            redisTemplate.expire(failKey, LOCK_MINUTES, TimeUnit.MINUTES);
+        }
     }
 }
