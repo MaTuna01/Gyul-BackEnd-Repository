@@ -26,9 +26,9 @@ public class AnalysisReportListener {
         try {
             message = objectMapper.readValue(payload, AnalysisReportMessage.class);
         } catch (Exception e) {
-            // 스키마 파싱 실패는 재처리해도 실패하므로 스킵 (추후 DLQ 도입 — 명세서 §6 TODO)
-            log.error("분석 리포트 역직렬화 실패 — 스킵: {}", e.getMessage());
-            return;
+            // 스키마 파싱 실패(poison message)는 예외를 전파해 에러 핸들러가 DLQ로 라우팅한다 (명세서 §3.3)
+            log.error("분석 리포트 역직렬화 실패 — DLQ로 전송: {}", e.getMessage());
+            throw new ReportMessageParseException("분석 리포트 메시지 파싱 실패", e);
         }
         analysisReportService.save(message);
     }

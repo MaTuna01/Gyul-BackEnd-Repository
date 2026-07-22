@@ -1,6 +1,7 @@
 package io.jieum.gyulbackendrepository.domain.report;
 
 import io.jieum.gyulbackendrepository.domain.report.messaging.AnalysisReportListener;
+import io.jieum.gyulbackendrepository.domain.report.messaging.ReportMessageParseException;
 import io.jieum.gyulbackendrepository.domain.report.model.entity.Emotion;
 import io.jieum.gyulbackendrepository.domain.report.model.entity.InterviewReport;
 import io.jieum.gyulbackendrepository.domain.report.repository.InterviewReportRepository;
@@ -18,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -100,8 +102,10 @@ class AnalysisReportListenerTest {
     }
 
     @Test
-    void 잘못된_JSON은_예외없이_스킵된다() {
-        listener.onMessage("{ not valid json");
+    void 잘못된_JSON은_파싱예외를_던져_DLQ로_라우팅된다() {
+        // 파싱 실패는 예외를 전파해 에러 핸들러가 DLQ로 보낸다 (적재는 되지 않음)
+        assertThatThrownBy(() -> listener.onMessage("{ not valid json"))
+                .isInstanceOf(ReportMessageParseException.class);
 
         assertThat(reportRepository.count()).isZero();
     }
