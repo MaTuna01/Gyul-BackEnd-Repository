@@ -58,7 +58,8 @@ app:
     redirect-uri: ${APP_OAUTH2_REDIRECT_URI:http://localhost:3000}  # 프론트 개발 완료 후 실제 주소로 교체
   kafka:
     topic:
-      analysis-report: interview.analysis-report  # FastAPI → Spring 분석 리포트 토픽 (docs/integration-spec.md §3)
+      analysis-report: interview.analysis-report          # FastAPI → Spring 분석 리포트 토픽 (docs/integration-spec.md §3)
+      analysis-report-dlq: interview.analysis-report.dlq  # 파싱 실패/재시도 소진 메시지 DLQ (§3.3)
 
 jwt:
   secret: ${JWT_SECRET}
