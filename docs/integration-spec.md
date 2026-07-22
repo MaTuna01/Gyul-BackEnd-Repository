@@ -60,20 +60,22 @@ Spring은 현재 **HS256(대칭키)** 로 서명한다. FastAPI는 **동일한 �
 | Claim | 타입 | 설명 |
 |---|---|---|
 | `sub` | string | **사용자 이메일** (사용자 식별자) |
+| `memberId` | number | **회원 PK**(`MEMBER.member_id`) — 이메일 변경에도 불변인 안정적 식별자 |
 | `role` | string | 권한 (`MEMBER` / `ADMIN`) |
 | `iat` | number | 발급 시각 |
 | `exp` | number | 만료 시각 (Access 30분) |
 
-> FastAPI는 사용자를 **`sub`(이메일)** 로 식별한다. 별도 memberId claim은 현재 없음
-> — 필요 시 Spring이 `memberId` claim 추가를 검토(§5 변경 관리).
+> FastAPI는 사용자를 `sub`(이메일)로 식별하되, **불변 식별자가 필요한 경우 `memberId`를 사용**한다.
+> `memberId`는 Access Token에만 담기며 Refresh Token에는 없다(이슈 #20).
 
 **FastAPI 검증 예시 (PyJWT)**
 
 ```python
 import jwt  # PyJWT
 payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
-email = payload["sub"]          # 사용자 식별
-role  = payload.get("role")
+email     = payload["sub"]           # 사용자 식별(이메일)
+member_id = payload.get("memberId")  # 불변 식별자(회원 PK)
+role      = payload.get("role")
 ```
 
 ### 1.2 향후 강화(선택)
@@ -238,6 +240,6 @@ wss://<ai-server-host>/ws/interview?token=<ACCESS_TOKEN>
 
 - [ ] WebSocket 세션 중 Access Token 만료 처리 정책 (강제종료 vs 유예)
 - [x] Redis DB 인덱스 정렬 (Spring을 DB 1로 이동) — 이슈 #8 완료
-- [ ] JWT에 `memberId` claim 추가 여부 (이메일 변경 대비)
+- [x] JWT에 `memberId` claim 추가 (이메일 변경 대비) — 이슈 #20 완료 (Access Token, §1.1)
 - [ ] Kafka DLQ 및 재처리 정책 확정
 - [x] 리포트 조회 API 명세 (§3.5) — 이슈 #12 완료
