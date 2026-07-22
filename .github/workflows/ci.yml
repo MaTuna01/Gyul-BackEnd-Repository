@@ -1,0 +1,28 @@
+name: CI
+
+# dev/main 대상 push·PR에서 빌드와 테스트를 자동 검증한다.
+# 테스트는 Testcontainers(#26)로 MySQL/Redis/Kafka를 기동하므로
+# 별도 인프라(services)나 시크릿 없이 동작한다. ubuntu-latest에는 Docker가 내장돼 있다.
+on:
+  push:
+    branches: [ dev, main ]
+  pull_request:
+    branches: [ dev, main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Build & Test
+        run: ./gradlew build --no-daemon
