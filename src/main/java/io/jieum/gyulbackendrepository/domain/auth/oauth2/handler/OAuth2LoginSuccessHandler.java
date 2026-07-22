@@ -69,10 +69,11 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         boolean needMoreInfo = member.getGender() == null;
         String targetPath = needMoreInfo ? "/oauth/additional-info" : "/";
 
+        // 토큰은 fragment(#)로 전달한다. fragment는 서버로 전송되지 않아
+        // 브라우저 히스토리 외 Referer 헤더·서버 액세스 로그에 남지 않는다. 프론트는 location.hash에서 파싱한다.
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
                 .path(targetPath)
-                .queryParam("accessToken", accessToken)
-                .queryParam("refreshToken", refreshToken)
+                .fragment("accessToken=" + accessToken + "&refreshToken=" + refreshToken)
                 .build()
                 .toUriString();
 
