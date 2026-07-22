@@ -35,7 +35,9 @@
 
 ### 📊 백엔드(Spring Boot) 진행 현황 (2026-07-22 기준)
 
-Phase 1의 **Spring Boot 측 작업은 기능적으로 완료** 상태이며, 남은 Phase 1 항목은 대부분 FastAPI(별도 레포) 몫이다.
+Phase 1의 **Spring Boot 측 작업은 기능적으로 완료**되었고, 운영 승격 전 **보안/운영 하드닝까지 완료**하여 `dev` → `main` 승격 준비가 끝났다. 남은 Phase 1 항목은 대부분 FastAPI(별도 레포) 몫이다.
+
+**핵심 기능**
 
 | 이슈 | 작업 | 상태 |
 |---|---|---|
@@ -48,12 +50,32 @@ Phase 1의 **Spring Boot 측 작업은 기능적으로 완료** 상태이며, �
 | #12 | 분석 리포트 조회 API (`GET /api/v1/members/me/reports`) | ✅ dev 머지 |
 | #14 | 전역 예외 처리 및 표준 에러 응답 규약 (`global/exception/`) | ✅ dev 머지 |
 | #16 | 필터 단계 인증/인가 예외 응답 통일 (401/403 표준화) | ✅ dev 머지 |
-| #20 | JWT Access Token에 `memberId` claim 추가 (이메일 변경 대비) | 🔵 feat/#20 (dev 머지 대기) |
+| #20 | JWT Access Token에 `memberId` claim 추가 (이메일 변경 대비) | ✅ dev 머지 |
+| #22 | Kafka DLQ/재처리 정책 (파싱 실패 즉시 DLQ, 일시 오류 재시도 후 DLQ) | ✅ dev 머지 |
+
+**테스트/CI 기반**
+
+| 이슈 | 작업 | 상태 |
+|---|---|---|
+| #24 | `.gitignore` 무효 `.yml` 패턴 정리 | ✅ dev 머지 |
+| #26 | 테스트 환경 개선 (Testcontainers + `application-test.yml` 자립화 → `.env`·인프라 없이 `./gradlew test`) | ✅ dev 머지 |
+| #28 | GitHub Actions CI 구축 (`dev`/`main` push·PR에서 `./gradlew build`) | ✅ dev 머지 |
+| #38 | GitHub Actions 액션 v5 상향 (Node20 deprecation 해소) | ✅ dev 머지 |
+
+**운영 승격 전 보안/운영 하드닝** (승격 점검에서 도출)
+
+| 이슈 | 작업 | 상태 |
+|---|---|---|
+| #30 | CORS 허용 오리진 환경변수화 (`CORS_ALLOWED_ORIGINS`) | ✅ dev 머지 |
+| #32 | Flyway 도입 + `ddl-auto=validate` (스키마 마이그레이션 소유) | ✅ dev 머지 |
+| #34 | OAuth 성공 토큰 URL fragment 전달 (쿼리파라미터 유출 방지) | ✅ dev 머지 |
+| #36 | DLQ 토픽 `NewTopic` 사전 생성 (브로커 auto-create 비의존) | ✅ dev 머지 |
+| #40 | 로그인 무차별 대입 방어 (Redis 실패 카운터, 5회 초과 시 10분 잠금) | ✅ dev 머지 |
 
 **다음 후보 작업**
-* [x] 테스트 환경 개선: Testcontainers 도입 + `application-test.yml` 자립화 → `.env`·인프라 없이 `./gradlew test` 통과 (이슈 #26)
-* [x] GitHub Actions CI 구축 (`dev`/`main` push·PR에서 `./gradlew build`, Testcontainers로 시크릿 없이 동작) (이슈 #28)
-* [ ] `dev` → `main` 승격 (Phase 1 백엔드 단위 기능 완성 시점)
+* [~] `dev` → `main` 승격 (Phase 1 백엔드 단위 기능 + 운영 하드닝 완료 → 진행)
+* [ ] Actuator `/health` 엔드포인트 (K8s/Nginx 프로브용 — 배포/인프라 단계에서 진행)
+* [ ] (선택) OAuth 토큰 HttpOnly 쿠키 전환, 로그인 per-IP rate limit 등 추가 하드닝
 
 > ⚠️ 이슈/PR 번호는 GitHub 기준. `feat/[#이슈]` → `dev` PR로 머지하며 이슈는 수동 close한다(브랜치 전략 참고).
 
