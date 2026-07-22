@@ -52,7 +52,7 @@ Phase 1의 **Spring Boot 측 작업은 기능적으로 완료** 상태이며, �
 
 **다음 후보 작업**
 * [x] 테스트 환경 개선: Testcontainers 도입 + `application-test.yml` 자립화 → `.env`·인프라 없이 `./gradlew test` 통과 (이슈 #26)
-* [ ] GitHub Actions CI 구축 (build+test, #26 위에서 진행)
+* [x] GitHub Actions CI 구축 (`dev`/`main` push·PR에서 `./gradlew build`, Testcontainers로 시크릿 없이 동작) (이슈 #28)
 * [ ] `dev` → `main` 승격 (Phase 1 백엔드 단위 기능 완성 시점)
 
 > ⚠️ 이슈/PR 번호는 GitHub 기준. `feat/[#이슈]` → `dev` PR로 머지하며 이슈는 수동 close한다(브랜치 전략 참고).
