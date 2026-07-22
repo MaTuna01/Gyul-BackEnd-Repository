@@ -35,3 +35,11 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Security ###
+# 시크릿은 .env로만 관리하고 커밋하지 않는다.
+# application*.yml 등 설정 파일은 ${ENV} 참조만 담으므로 추적 대상이다 (커밋 O).
+.env
+
+# macOS
+.DS_Store

@@ -1,0 +1,30 @@
+# 테스트 프로파일 — 인프라는 Testcontainers(TestcontainersConfig)가 기동하고,
+# @ServiceConnection이 datasource/redis/kafka 연결 정보를 오버라이드한다.
+# 여기서는 application.yml의 "기본값 없는 ${ENV}" 참조를 테스트용 더미로 채워
+# .env 없이도 컨텍스트가 뜨게만 한다. (모두 테스트 전용 더미이며 실제 시크릿이 아님)
+spring:
+  datasource:
+    # 실제 접속값은 @ServiceConnection(MySQLContainer)이 대체. 여기 값은 플레이스홀더 해소용.
+    username: test
+    password: test
+  kafka:
+    listener:
+      # 브로커 없이도 컨텍스트가 뜨도록 리스너 자동 시작 비활성화.
+      # (리스너 로직은 리스너 메서드를 직접 호출해 검증한다)
+      auto-startup: false
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: test-google-client-id
+            client-secret: test-google-client-secret
+          kakao:
+            client-id: test-kakao-client-id
+            client-secret: test-kakao-client-secret
+
+jwt:
+  # HS256 최소 길이(32바이트) 이상 더미 시크릿
+  secret: test-jwt-secret-for-integration-tests-0123456789
+  access-expiration: 1800000
+  refresh-expiration: 604800000
